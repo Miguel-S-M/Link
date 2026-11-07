@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#070d1a">
+<link rel="icon" type="image/webp" href="favicon.webp?v=2">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>LinkGlove Tradutor</title>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1675466862/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.4.1646425229/face_detection.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619/face_mesh.js" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="style.css?v=2">
+</head>
+<body>
+<div id="app">
+<aside id="side">
+  <div class="brand"><img id="brandLogo" alt="LinkGlove"><div><b>LinkGlove</b><small>Libras aproxima.<br>E conecta.</small></div></div>
+  <nav class="tabs"><button data-tab="tr" class="on">🗣️ Tradutor</button><button data-tab="cfg">⚙️ Configurar alfabeto</button><button data-tab="diag">🔎 Diagnóstico</button></nav>
+  <div class="linkbox"><img id="lkImg" alt="Link, o mascote"><div class="bubble" id="lkSay">Olá! Vamos aprender Libras juntos?</div></div>
+</aside>
+<main id="main">
+<header>
+  <div><h1>LinkGlove Tradutor</h1><small style="color:var(--mut)">Tradutor de Libras por câmera, offline</small></div>
+  <div class="row">
+    <button id="btnInterp">🔄 Modo intérprete</button>
+  </div>
+</header>
+<div class="row" id="statusbar" style="margin-bottom:10px"><span class="pillst" id="stCam"></span></div>
+<div id="compat" style="margin-bottom:14px"></div>
+<div id="warn"></div>
+
+<div id="tab-tr" class="pane on">
+
+<section>
+  <div class="main">
+    <div class="big" aria-live="polite">
+      <span id="letter">–</span>
+      <small>Letra / gesto detectado</small>
+    </div>
+    <div>
+      <h2>Texto reconhecido</h2>
+      <textarea id="text" aria-label="Texto reconhecido" placeholder="As letras reconhecidas pela câmera aparecem aqui (pode ter erros e faltar acentos)..."></textarea>
+      <div class="row" id="sugg" style="margin-top:8px"></div>
+      <div id="heard" aria-live="polite"><small>Frase entendida</small><span id="heardTxt">–</span></div>
+      <div class="row" style="margin-top:10px">
+        <button id="btnClear">Limpar Texto</button>
+        <button id="btnVoice">🔊 Voz: Ativada</button>
+        <button id="btnSpeakAll" class="primary">Falar a frase</button>
+      </div>
+      <div class="row" style="margin-top:10px"><span style="color:var(--mut)">Falar em:</span><span class="row" id="vlang"></span></div>
+      <div class="row" style="margin-top:10px"><label style="color:var(--mut)">Voz <select id="voiceSel" aria-label="Voz"></select></label><label style="color:var(--mut)">Velocidade <input type="range" id="rate" min="0.5" max="1.2" step="0.05" value="0.85"></label></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Reconhecimento por câmera</h2>
+  <div class="camgrid" id="camStage">
+    <div class="cam">
+      <video id="camVideo" playsinline muted></video>
+      <canvas id="camCanvas"></canvas>
+      <div class="off coff">Câmera desligada</div>
+    </div>
+    <div class="camside">
+      <div class="big" id="camBig" aria-live="polite">
+        <span id="camLetter">–</span>
+        <small>Letra reconhecida pela câmera</small>
+        <div class="bar" aria-hidden="true"><i id="camBar"></i></div>
+      </div>
+      <div class="row"><button class="btnCam primary">Ligar câmera</button><button id="btnFull">⛶ Tela cheia</button></div>
+      <details class="adv"><summary>⚙ Avançado da câmera (rosto, expressões, trava, fundo, offline)</summary>
+        <div class="row"><button class="btnFace" aria-pressed="false">👤 Reconhecer rosto</button><button class="btnExpr" aria-pressed="false">😀 Expressões</button></div>
+        <div class="row"><button class="btnLock">🔒 Travar nas minhas mãos</button><button class="btnUnlock" disabled>🔓 Soltar trava</button><button class="btnBg" aria-pressed="true">👥 Ignorar mãos do fundo: ligado</button></div>
+        <div class="row"><button class="btnOffline">📥 Preparar uso offline</button><button class="btnInstall" hidden>📲 Instalar app</button></div>
+        <small class="offSt" style="color:var(--mut);display:block" role="status"></small>
+      </details>
+      <small class="faceSt" style="color:var(--mut);display:block" role="status"></small>
+      <small class="lockSt" style="color:var(--mut);display:block" role="status"></small>
+      <div class="cmsg" role="status"></div>
+      <div class="poseWarn" role="status"></div>
+      <small style="color:var(--mut)">Mantenha a mesma letra por 1 segundo para enviá-la ao texto. Para repetir a mesma letra, tire a mão da imagem um instante. Letras: A, B, C, D, E, F, G, I, L, O, R, U, V, W, Y (dedos para cima) e M, N, Q (dedos para baixo). Controle: mão aberta com polegar aberto = espaço, dois punhos = apagar, dois polegares para cima = falar a frase. Sinais: TUDO BEM (polegar para cima), PARAR (uma mão aberta sobre a outra), EU (apontar o indicador para si), FAMÍLIA (duas mãos em F que se afastam e se juntam) e 6-7 (as duas mãos sobem e descem alternadas).</small>
+      <div id="camDbg"></div>
+      <div class="fsonly">
+        <div id="stRaw"></div><div id="stTr"></div>
+        <div class="row"><button id="stSpeak" aria-label="Ouvir a frase">🔊</button><select id="stSel" aria-label="Idioma"></select><button id="btnExit">✕ Sair</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="pmSec">
+  <h2>Os 5 parâmetros da Libras (ao vivo)</h2>
+  <div class="tr">
+    <div class="card"><h3>1 · Configuração da mão</h3><p id="pmCM">–</p></div>
+    <div class="card"><h3>2 · Locação (ponto de articulação)</h3><p id="pmPA">–</p></div>
+    <div class="card"><h3>3 · Orientação</h3><p id="pmOR">–</p></div>
+    <div class="card"><h3>4 · Movimento</h3><p id="pmMV">–</p></div>
+    <div class="card"><h3>5 · Expressões faciais e corporais</h3><p id="pmENM">–</p></div>
+  </div>
+  <div class="row" style="margin-top:12px"><label style="color:var(--mut)">Mão dominante <select id="pmDom"><option value="D">Direita</option><option value="E">Esquerda</option></select></label><span id="pmCand"></span></div>
+  <div class="row" style="margin-top:10px"><input id="pmNome" placeholder="Nome do sinal (ex.: obrigado)" aria-label="Nome do sinal"><button id="pmGravar" class="primary">Gravar parâmetros (2,5 s)</button><button id="pmExp">Exportar léxico (JSON)</button><button id="pmLimpar">Apagar léxico</button></div>
+  <small id="pmMsg" style="color:var(--mut)"></small> <small id="pmLex" style="color:var(--mut)"></small>
+  <p class="note">Ligue a câmera e, para locação e expressões, ative "Reconhecer rosto" e "Expressões" em ⚙ Avançado. O corpo (ombros e tronco) ainda não é medido. Valores aproximados: confira os nomes com quem sabe Libras.</p>
+</section>
+
+<section>
+  <h2>Tradução em tempo real</h2>
+  <div class="tr" id="tr"></div>
+</section>
+
+<section>
+  <h2>Conversa: escutar e traduzir</h2>
+  <div class="row"><label style="color:var(--mut)">A pessoa fala em <select id="spLang"></select></label><button id="btnListen" class="primary">🎤 Escutar e traduzir</button></div>
+  <div class="tr" style="margin-top:12px">
+    <div class="card"><h3>Ouvido</h3><p id="spOrig">–</p></div>
+    <div class="card"><h3><span>Tradução <span id="spTarget"></span></span><button id="spSpeak" aria-label="Ouvir a tradução">🔊</button></h3><p id="spTr" style="font-size:1.5rem">–</p></div>
+  </div>
+  <div class="row" style="margin-top:10px"><input id="spIn" placeholder="Sem microfone? Digite aqui o que a pessoa disse" aria-label="Texto para traduzir"><button id="btnSpTr">Traduzir texto</button></div>
+  <small id="spMsg" style="color:var(--mut)"></small>
+</section>
+<section>
+  <h2>Favoritos e histórico</h2>
+  <div class="row"><input id="favIn" placeholder="Criar uma frase minha (ex.: Preciso de ajuda, por favor)" aria-label="Nova frase favorita"><button id="btnFavAdd">Adicionar</button><button id="btnFavCur">★ Salvar a frase atual</button></div>
+  <h3>Favoritas <small style="color:var(--mut);font-weight:400">(toque para falar)</small></h3><div id="favList"></div>
+  <h3>Últimas frases <button id="btnHistClear" style="padding:2px 10px;margin-left:8px">limpar</button></h3><div class="row" id="histList"></div>
+</section>
+</div>
+
+<div id="tab-cfg" class="pane">
+<section>
+  <div class="row" style="justify-content:space-between;margin-bottom:12px"><h2 style="margin:0">Configurar alfabeto – treino da IA</h2><span style="display:flex;gap:8px;flex-wrap:wrap"><button id="btnPwChange">🔑 Trocar senha</button><button id="btnLock">🔒 Trancar</button></span></div>
+  <div class="camgrid">
+    <div class="cam"><canvas class="mirror"></canvas><div class="off coff">Câmera desligada</div></div>
+    <div class="camside">
+      <div class="big"><span id="gdT" style="font-size:2.4rem">–</span><small id="gdMsg">Treino guiado: a câmera pede cada letra e grava sozinha.</small></div>
+      <div class="row"><button class="btnCam primary">Ligar câmera</button><button id="btnGuide">Iniciar treino guiado</button></div>
+      <details class="adv"><summary>⚙ Avançado da câmera (rosto, expressões, trava, fundo, offline)</summary>
+        <div class="row"><button class="btnFace" aria-pressed="false">👤 Reconhecer rosto</button><button class="btnExpr" aria-pressed="false">😀 Expressões</button></div>
+        <div class="row"><button class="btnLock">🔒 Travar nas minhas mãos</button><button class="btnUnlock" disabled>🔓 Soltar trava</button><button class="btnBg" aria-pressed="true">👥 Ignorar mãos do fundo: ligado</button></div>
+        <div class="row"><button class="btnOffline">📥 Preparar uso offline</button><button class="btnInstall" hidden>📲 Instalar app</button></div>
+        <small class="offSt" style="color:var(--mut);display:block" role="status"></small>
+      </details>
+      <small class="faceSt" style="color:var(--mut);display:block" role="status"></small>
+      <small class="lockSt" style="color:var(--mut);display:block" role="status"></small>
+      <label style="color:var(--mut)"><input type="checkbox" id="gdNum" style="min-width:0;flex:none"> incluir números 0–9</label>
+      <div class="cmsg" role="status"></div>
+    </div>
+  </div>
+  <div class="row" style="margin-top:12px"><label style="color:var(--mut)">Perfil de treino <select id="profSel"></select></label><button id="btnProf">Novo perfil</button></div>
+  <h3>Treino manual</h3>
+  <div class="row"><select id="trL" aria-label="Letra a ensinar"></select><button id="btnRec">Gravar 1,5 s</button><button id="btnTrOne">🗑 Apagar o treino desta letra</button><button id="btnTrClear">Apagar todo o treino</button><button id="btnExp">Exportar</button><button id="btnImp">Importar</button><input type="file" id="fileImp" accept=".json" hidden></div>
+  <h3>Mapa do treino <small style="color:var(--mut);font-weight:400">(verde = 10 ou mais gravações)</small></h3>
+  <div id="trMap"></div><small id="trInfo" style="color:var(--mut)"></small>
+  <h3>Treino de sinais (com movimento)</h3>
+  <div class="row"><select id="sgL" aria-label="Sinal a ensinar"></select><button id="btnSgRec" class="primary">Gravar sinal (2 s)</button><button id="btnNewSign">➕ Criar sinal</button><button id="btnDelSign">Apagar sinal criado</button><button id="btnSgOne">🗑 Apagar as gravações deste sinal</button><button id="btnSgClear">Apagar todos os sinais gravados</button></div>
+  <div id="sgMap" style="margin-top:8px"></div>
+  <p class="note">Ligue a câmera, escolha o sinal, clique em gravar e faça o sinal inteiro depois da contagem. Grave 3 vezes cada um, com pequenas variações. Fique na mesma distância da câmera de sempre.</p>
+  <p class="note">Com <b>Reconhecer rosto</b> ligado, os sinais gravados passam a considerar onde a mão está em relação ao rosto (testa, boca, queixo...). Grave e use o sinal com essa opção no mesmo estado. O rosto só é detectado, ninguém é identificado.</p>
+  <p class="note">Grave também letras parecidas (C e E, U e V). Letras com movimento (Ç, J, K, Z) só funcionam como sinais gravados.</p>
+</section>
+<section>
+  <h2>Calibração guiada</h2>
+  <div class="camgrid">
+    <div class="cam"><canvas class="mirror"></canvas><div class="off coff">Câmera desligada</div></div>
+    <div class="camside">
+      <div class="big"><span id="clT" style="font-size:2.4rem">–</span><small id="clMsg">Verifica a luz, a distância e ajusta os limites dos dedos à sua mão.</small></div>
+      <div class="row"><button class="btnCam">Ligar câmera</button><button id="btnCal" class="primary">Calibrar</button><button id="btnCalReset">Restaurar padrão</button></div>
+      <div class="cmsg" role="status"></div><div class="poseWarn"></div>
+    </div>
+  </div>
+</section>
+<section>
+  <h2>Teste de precisão</h2>
+  <div class="camgrid">
+    <div class="cam"><canvas class="mirror"></canvas><div class="off coff">Câmera desligada</div></div>
+    <div class="camside">
+      <div class="big"><span id="acT" style="font-size:2.4rem">–</span><small id="acMsg">Pede cada letra uma vez e mostra o acerto por letra.</small></div>
+      <div class="row"><button class="btnCam">Ligar câmera</button><button id="btnAcc" class="primary">Iniciar teste</button></div>
+      <div class="cmsg" role="status"></div>
+    </div>
+  </div>
+  <div id="acOut" style="margin-top:12px"></div>
+</section>
+</div>
+
+<div id="tab-diag" class="pane">
+<section>
+  <h2>Diagnóstico ao vivo</h2>
+  <div class="camgrid">
+    <div class="cam"><canvas class="mirror"></canvas><div class="off coff">Câmera desligada</div></div>
+    <div class="camside">
+      <div class="row"><button class="btnCam primary">Ligar câmera</button><button class="btnFace" aria-pressed="false">👤 Reconhecer rosto</button><button class="btnExpr" aria-pressed="false">😀 Expressões</button></div>
+      <div class="row" style="margin-top:8px"><button id="dgNeutro">Calibrar rosto neutro (3 s)</button><button id="dgNeutroRest">Restaurar padrão</button><label style="color:var(--mut)"><input type="checkbox" id="dgPts" checked style="min-width:0;flex:none"> pontos do rosto</label></div>
+      <small id="dgMsg" style="color:var(--mut)"></small>
+      <div class="cmsg" role="status"></div>
+      <div id="dgSaude" style="margin-top:8px"></div>
+    </div>
+  </div>
+</section>
+<section><h2>Mãos: coordenadas</h2><div id="dgMaos"></div></section>
+<section><h2>Rosto e expressões</h2><div id="dgRosto"></div></section>
+<section><h2>Parâmetros medidos</h2><div id="dgParam"></div></section>
+</div>
+
+</main>
+</div>
+<dialog id="nsDlg">
+  <h3 style="margin:0 0 6px">Criar sinal</h3>
+  <p style="color:var(--mut);margin-bottom:8px">Dê um nome ao sinal. As traduções são opcionais. Depois é só gravar o sinal.</p>
+  <div style="display:grid;gap:8px;margin-bottom:10px">
+    <input id="nsPt" placeholder="Nome em português (ex.: bom amigo)" aria-label="Nome em português">
+    <input id="nsEs" placeholder="🇪🇸 Espanhol (opcional)" aria-label="Espanhol">
+    <input id="nsIt" placeholder="🇮🇹 Italiano (opcional)" aria-label="Italiano">
+    <input id="nsDe" placeholder="🇩🇪 Alemão (opcional)" aria-label="Alemão">
+    <input id="nsEn" placeholder="🇬🇧 Inglês (opcional)" aria-label="Inglês">
+  </div>
+  <div class="row"><button id="nsOk" class="primary">Criar</button><button id="nsCancel">Cancelar</button></div>
+  <small id="nsMsg" style="color:var(--bad)"></small>
+</dialog>
+<dialog id="pwDlg">
+  <h3 id="pwTitle" style="margin:0 0 6px">Área protegida</h3>
+  <p id="pwDesc" style="color:var(--mut);margin-bottom:10px"></p>
+  <input type="password" id="pwOld" autocomplete="current-password" placeholder="Senha atual" aria-label="Senha atual" style="width:100%;margin-bottom:10px;display:none">
+  <input type="password" id="pwIn" autocomplete="off" aria-label="Senha" style="width:100%;margin-bottom:10px">
+  <input type="password" id="pwIn2" autocomplete="new-password" placeholder="Repita a senha" aria-label="Repita a senha" style="width:100%;margin-bottom:10px;display:none">
+  <div class="row"><button id="pwOk" class="primary">Entrar</button><button id="pwCancel">Cancelar</button><button id="pwForgot" style="display:none">Esqueci a senha</button></div>
+  <small id="pwMsg" style="color:var(--bad)"></small>
+</dialog>
+<dialog id="signDlg">
+  <h3 id="sgTitle" style="margin:0 0 6px"></h3><div id="sgTr" style="color:var(--mut);margin-bottom:10px"></div>
+  <div id="sgDraw" style="margin-bottom:8px"></div>
+  <img id="sgImg" alt="Desenho do sinal" style="display:none;width:100%;border-radius:10px;margin-bottom:8px">
+  <p id="sgNone" style="color:var(--mut);font-size:.9rem;margin-bottom:10px">Ainda não há desenho deste sinal. Veja o vídeo ou adicione uma foto ou desenho seu.</p>
+  <div class="row"><button id="sgVid">🎬 Ver vídeo do sinal</button><button id="sgSpeak" aria-label="Ouvir">🔊</button><button id="sgAdd">Adicionar desenho</button><button id="sgDel">Remover</button><button id="sgClose" class="primary">Fechar</button></div>
+  <input type="file" id="sgFile" accept="image/*" hidden>
+</dialog>
+<div id="interp" aria-live="polite"><button id="ipClose" aria-label="Fechar">✕</button><div id="ipTxt">…</div></div>
+<div id="toast" role="status"></div>
+
+<script src="js/imagens.js?v=2"></script>
+<script src="js/00-ponte-aprender.js?v=2"></script>
+<script src="js/01-base-tradutor.js?v=2"></script>
+<script src="js/02-nucleo-ia.js?v=2"></script>
+<script src="js/03-rosto.js?v=2"></script>
+<script src="js/04-trava-maos.js?v=2"></script>
+<script src="js/06-classificador.js?v=2"></script>
+<script src="js/07-suavizacao.js?v=2"></script>
+<script src="js/08-sinais-camera.js?v=2"></script>
+<script src="js/09-abas-treino.js?v=2"></script>
+<script src="js/10-voz-jogos.js?v=2"></script>
+<script src="js/12-precisao-calibracao.js?v=2"></script>
+<script src="js/13-utilidades.js?v=2"></script>
+<script src="js/20-offline.js?v=2"></script>
+<script src="js/21-parametros.js?v=2"></script>
+<script src="js/22-expressoes.js?v=2"></script>
+<script src="js/23-diagnostico.js?v=2"></script>
+</body>
+</html>
