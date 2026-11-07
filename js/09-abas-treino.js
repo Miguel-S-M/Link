@@ -1,6 +1,7 @@
 // Abas, senhas, treino, prática, frases, sinais, tela cheia
 // ================= Abas, treino, prática, frases, sinais, tela cheia =================
 const cyrb53=(str,seed=0)=>{let h1=0xdeadbeef^seed,h2=0x41c6ce57^seed;for(let i=0,ch;i<str.length;i++){ch=str.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677);}h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return 4294967296*(2097151&h2)+(h1>>>0)};
+let pwDest = 'cfg';
 let cfgUnlocked = false; try{ cfgUnlocked = sessionStorage.getItem('linkglove_cfg')==='1' }catch(e){}
 // Cada aba só funciona enquanto está aberta: ao sair, o que ela estava fazendo é interrompido e a entrada (luva/câmera) deixa de chegar nela.
 let curTab = 'tr';
@@ -50,7 +51,7 @@ function askPw(mode){
   ['pwOld','pwIn','pwIn2'].forEach(i=>$(i).value=''); $('pwMsg').textContent='';
   $('pwDlg').showModal(); setTimeout(()=>$(ch?'pwOld':'pwIn').focus(),50);
 }
-function pwUnlock(){ cfgUnlocked=true; try{ sessionStorage.setItem('linkglove_cfg','1') }catch(e){} $('pwDlg').close(); goTab('cfg'); }
+function pwUnlock(){ cfgUnlocked=true; try{ sessionStorage.setItem('linkglove_cfg','1') }catch(e){} $('pwDlg').close(); goTab(pwDest); }
 async function tryPw(){
   const a=$('pwIn').value.trim(), msg=t=>{ $('pwMsg').textContent=t; };
   if(pwMode==='enter'){ if(await pwCheck(a)) pwUnlock(); else { msg('Senha incorreta.'); $('pwIn').select(); } return; }
@@ -70,7 +71,7 @@ $('pwForgot').onclick=()=>{
 };
 $('btnPwChange').onclick=()=>askPw(pwGet()?'change':'create');
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
-  if (b.dataset.tab==='cfg' && !cfgUnlocked){ askPw(); return; }
+  if ((b.dataset.tab==='cfg'||b.dataset.tab==='diag') && !cfgUnlocked){ pwDest=b.dataset.tab; askPw(); return; }
   goTab(b.dataset.tab);
 });
 $('btnLock').onclick=()=>{ cfgUnlocked=false; try{ sessionStorage.removeItem('linkglove_cfg') }catch(e){} goTab('tr'); };

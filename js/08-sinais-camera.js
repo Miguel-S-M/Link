@@ -65,6 +65,7 @@ function onHandResults(res){
     cx.fillStyle='#5eead4';
     lm.forEach(q=>{cx.beginPath();cx.arc(q.x*w,q.y*h,4,0,6.283);cx.fill()});
   });
+  diagDraw(cx,w,h,all);
   document.querySelectorAll('canvas.mirror').forEach(m=>{
     if(!m.offsetParent) return;
     if(m.width!==w||m.height!==h){m.width=w;m.height=h}
@@ -83,6 +84,7 @@ function onHandResults(res){
   const rc6 = hist.filter(f=>now-f.t<=600 && f.h.length), xs6 = rc6.map(f=>f.h[0].x), ys6 = rc6.map(f=>f.h[0].y);
   const mvNow = rc6.length>3 ? Math.max(Math.max(...xs6)-Math.min(...xs6), Math.max(...ys6)-Math.min(...ys6)) : 0;
   poseCheck(all,cl,now);
+  paramsStep(all,cl,now,w,h);
   if (box.on||tut.on||(mp.live&&mp.mode==='box')) boxInput(all,cl,now,w,h);
   if (calib.on && curTab==='cfg' && all.length===1) calib.s.push({r:cl[0].r.slice(), z:cl[0].size/h});
   const g = now<gestLock ? null : (game.on&&game.type==='sinais' ? (game.builtin ? (sdbg='',detectGesture()) : signTarget(now)) : (detectGesture() || recogSign(now)));

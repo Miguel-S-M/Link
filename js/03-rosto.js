@@ -3,7 +3,7 @@
 let FACEON = false; try{ FACEON = localStorage.getItem('linkglove_rosto')==='1' }catch(e){}
 let faceDet = null, FACE = null, faceN = 0, FACEFAIL = false;
 let faceMesh = null, EXPR = false, HEADH = []; try{ EXPR = localStorage.getItem('linkglove_expr')==='1' }catch(e){}
-const faceTabOk = () => ['tab-tr','tab-cfg'].some(id => { const q=$(id); return q && q.classList.contains('on'); });
+const faceTabOk = () => ['tab-tr','tab-cfg','tab-diag'].some(id => { const q=$(id); return q && q.classList.contains('on'); });
 const faceFresh = () => (FACE && performance.now()-FACE.t<1500) ? FACE : null;   // se a mão tapar o rosto, vale o último por 1,5 s
 function faceUi(){
   document.querySelectorAll('.btnFace').forEach(b=>{ b.textContent = FACEON ? '👤 Rosto: ligado' : '👤 Reconhecer rosto'; b.classList.toggle('primary',FACEON); b.setAttribute('aria-pressed',FACEON?'true':'false'); });
@@ -45,6 +45,7 @@ function onMeshResults(res){   // FaceMesh (modo Expressões): além do rosto e 
   else f=fs.reduce((m,q)=>q.w>m.w?q:m);
   const l=f.l, d=(a,b)=>Math.hypot((l[a].x-l[b].x)*W,(l[a].y-l[b].y)*H);
   const fH=d(10,152)||1, fW=d(234,454)||1;
+  exprStep(l,W,H);
   const ex=[ d(13,14)/fH,                                                        // boca aberta
              d(61,291)/fW,                                                       // largura da boca
              (((l[13].y+l[14].y)/2-(l[61].y+l[291].y)/2)*H)/fH,                  // cantos da boca para cima (sorriso)
