@@ -32,7 +32,7 @@ function diagRender(){
   const now=performance.now(), P=PARAMS, F=faceFresh(), X=EX2&&now-EX2.t<1500?EX2:null, D=DG.last&&now-DG.last.t<1500?DG.last:null;
   let ls_ok=true; try{ localStorage.setItem('_t','1'); localStorage.removeItem('_t') }catch(e){ ls_ok=false }
   $('dgSaude').innerHTML =
-    dgChip(camOn,'Câmera') + dgChip(!!D, D?D.all.length+' mão(s)':'Mãos') + dgChip(FACEON&&!!F,'Rosto') + dgChip(FACEON&&EXPR&&!!X,'Expressões') +
+    dgChip(camOn,'Câmera') + dgChip(!!D, D?D.all.length+' mão(s)':'Mãos') + dgChip(FACEON&&!!F,'Rosto') + dgChip(FACEON&&EXPR&&!!X,'Expressões') + dgChip(ML.estado==='ok','Modelo de expressões'+(ML.estado==='carregando'?' (carregando…)':ML.estado==='falhou'?' (não carregou: usando medida simples'+(ML.erro?' — '+ML.erro:'')+')':ML.estado===''?' (ligue Expressões)':'')) +
     dgChip(EX_LG.ok,'Leitura da imagem (língua)') + dgChip(ls_ok,'Armazenamento') + dgChip(!!window.speechSynthesis,'Voz') +
     dgChip(!!(navigator.serviceWorker&&navigator.serviceWorker.controller),'Modo offline') +
     '<br><small style="color:var(--mut)">Quadros/s: mãos '+DG.fps+' · rosto '+DG.ffps+(EX_CAL?' · calibrando rosto neutro…':'')+'</small>';
@@ -50,7 +50,7 @@ function diagRender(){
     else {
       h+='<p>Reconhecido agora: <b>'+(X.nomes.join(', ')||'rosto neutro')+'</b></p>';
       h+=EX_ORDEM.map(k=>{ const p=Math.round(X.i[k]*100); return '<div class="row" style="gap:8px;align-items:center"><span style="width:190px">'+k+'</span><div class="bar" style="flex:1;min-width:80px"><i style="width:'+p+'%"></i></div><small style="width:40px;text-align:right">'+p+'%</small></div>'; }).join('');
-      h+='<details><summary>Medidas do rosto</summary><pre style="font-size:.78rem">'+Object.keys(X.v).map(k=>k.padEnd(6)+X.v[k].toFixed(3)).join('\n')+'\nlíngua (área) '+X.lingua.frac.toFixed(2)+'</pre></details>';
+      h+='<details><summary>Medidas do rosto</summary><pre style="font-size:.78rem">'+Object.keys(X.v).map(k=>k.padEnd(6)+X.v[k].toFixed(3)).join('\n')+'\nlíngua (área) '+X.lingua.frac.toFixed(2)+' · cor da pele a*='+X.lingua.a.toFixed(0)+'</pre></details>'+(X.ml&&ML.bs?'<details><summary>Pontuações do modelo (maiores)</summary><pre style="font-size:.78rem">'+Object.keys(ML.bs).sort((p,q)=>ML.bs[q]-ML.bs[p]).slice(0,14).map(k=>k.padEnd(20)+ML.bs[k].toFixed(2)).join('\n')+'</pre></details>':'');
     }
     $('dgRosto').innerHTML=h;
   }

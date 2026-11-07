@@ -38,7 +38,8 @@
     const jobs=[
       ['mãos', async()=>{ const m=new Hands({locateFile:base('hands@0.4.1675469240')}); m.setOptions({maxNumHands:1,modelComplexity:0}); m.onResults(()=>{}); await m.send({image:c}); await m.close(); }],
       ['rosto', async()=>{ const m=new FaceDetection({locateFile:base('face_detection@0.4.1646425229')}); m.setOptions({model:'short'}); m.onResults(()=>{}); await m.send({image:c}); await m.close(); }],
-      ['expressões', async()=>{ const m=new FaceMesh({locateFile:base('face_mesh@0.4.1633559619')}); m.setOptions({maxNumFaces:1,refineLandmarks:false}); m.onResults(()=>{}); await m.send({image:c}); await m.close(); }]
+      ['expressões', async()=>{ const m=new FaceMesh({locateFile:base('face_mesh@0.4.1633559619')}); m.setOptions({maxNumFaces:1,refineLandmarks:false}); m.onResults(()=>{}); await m.send({image:c}); await m.close(); }],
+      ['modelo de expressões', async()=>{ await mlCarregar(); if (ML.estado!=='ok') throw new Error(ML.erro); }]
     ];
     const falhas=[];
     for (let i=0;i<jobs.length;i++){

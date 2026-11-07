@@ -60,6 +60,7 @@ async function faceStep(src){
   if (!EXPR && typeof FaceDetection==='undefined'){ FACEFAIL=true; camMsg('Não foi possível carregar o reconhecimento de rosto (verifique a internet).'); return; }
   try{
     if (EXPR){
+      if (await mlStep(src)) return;   // modelo de blendshapes; se não carregar, segue com a malha antiga
       if (!faceMesh){
         faceMesh = new FaceMesh({locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619/${f}`});
         faceMesh.setOptions({maxNumFaces:2, refineLandmarks:false, minDetectionConfidence:0.5, minTrackingConfidence:0.5});
